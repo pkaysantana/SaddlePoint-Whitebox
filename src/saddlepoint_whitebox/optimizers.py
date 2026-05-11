@@ -6,7 +6,7 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from math import isfinite
 
-from .calculus import evaluate_pes
+from .calculus import PESPoint, evaluate_pes
 from .classification import StationaryPointType, classify_pes_point
 from .matrix import dot, jacobi_eigendecomposition_symmetric, norm
 
@@ -198,7 +198,7 @@ def _apply_trust_radius(step: list[float], trust_radius: float) -> list[float]:
 def _result(
     converged: bool,
     reason: str,
-    point,
+    point: PESPoint,
     eigenvalues: list[float],
     classification: StationaryPointType,
     history: list[OptimizationStep],

@@ -406,9 +406,12 @@ def max_abs_off_diagonal(matrix: Iterable[Iterable[NumberLike]]) -> float:
     """Return the largest absolute off-diagonal value in a square matrix."""
 
     values = _as_square_matrix(matrix, "matrix")
-    if len(values) == 1:
-        return 0.0
-    return _largest_off_diagonal(values)[2]
+    largest = 0.0
+    for row_index, row in enumerate(values):
+        for column_index, value in enumerate(row):
+            if row_index != column_index:
+                largest = max(largest, abs(value))
+    return largest
 
 
 def _largest_off_diagonal(matrix: Matrix) -> tuple[int, int, float]:
