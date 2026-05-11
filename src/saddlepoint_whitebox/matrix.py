@@ -76,6 +76,41 @@ def norm(vector: Iterable[NumberLike]) -> float:
     return sqrt(dot(vector, vector))
 
 
+def normalize_vector(
+    vector: Iterable[NumberLike],
+    tolerance: float = 1.0e-15,
+) -> Vector:
+    """Return a normalized copy of ``vector``."""
+
+    values = _as_vector(vector, "vector")
+    length = norm(values)
+    if length <= tolerance:
+        raise ValueError("cannot normalize a zero-length vector")
+    return [value / length for value in values]
+
+
+def project(
+    vector: Iterable[NumberLike],
+    onto: Iterable[NumberLike],
+    tolerance: float = 1.0e-15,
+) -> Vector:
+    """Project ``vector`` onto ``onto``."""
+
+    vector_values = _as_vector(vector, "vector")
+    onto_values = normalize_vector(onto, tolerance=tolerance)
+    coefficient = dot(vector_values, onto_values)
+    return scale_vector(onto_values, coefficient)
+
+
+def vector_distance(
+    left: Iterable[NumberLike],
+    right: Iterable[NumberLike],
+) -> float:
+    """Return the Euclidean distance between two vectors."""
+
+    return norm(subtract_vectors(left, right))
+
+
 def add_matrices(
     left: Iterable[Iterable[NumberLike]],
     right: Iterable[Iterable[NumberLike]],
@@ -263,14 +298,37 @@ def jacobi_eigenvalues_symmetric(
 ) -> Vector:
     """Return eigenvalues of a real symmetric matrix with Jacobi rotations."""
 
+    eigenvalues, _ = jacobi_eigendecomposition_symmetric(
+        matrix,
+        tolerance=tolerance,
+        max_iterations=max_iterations,
+    )
+    return eigenvalues
+
+
+def jacobi_eigendecomposition_symmetric(
+    matrix: Iterable[Iterable[NumberLike]],
+    tolerance: float = 1.0e-12,
+    max_iterations: int | None = None,
+) -> tuple[Vector, list[Vector]]:
+    """Return sorted eigenvalues and normalized eigenvectors of a symmetric matrix.
+
+    The Jacobi method repeatedly applies plane rotations that zero the largest
+    off-diagonal element. For a real symmetric matrix those rotations converge
+    to a diagonal matrix, and the product of all rotations is the eigenvector
+    matrix. Eigenvectors are returned as column vectors, but stored as a list of
+    vectors so ``eigenvectors[k]`` belongs to ``eigenvalues[k]``.
+    """
+
     values = _as_square_matrix(matrix, "matrix")
     if not is_symmetric(values, tolerance=max(tolerance * 100.0, 1.0e-10)):
         raise ValueError("Jacobi eigenvalue decomposition requires a symmetric matrix")
 
     size = len(values)
     if size == 1:
-        return [values[0][0]]
+        return [values[0][0]], [[1.0]]
 
+    eigenvector_matrix = identity(size)
     iterations = max_iterations if max_iterations is not None else 100 * size * size
 
     for _ in range(iterations):
@@ -300,10 +358,25 @@ def jacobi_eigenvalues_symmetric(
             values[row][index] = values[index][row]
             values[index][column] = sine * a_ip + cosine * a_iq
             values[column][index] = values[index][column]
+
+        # Accumulate the same rotation into the eigenvector matrix. The matrix
+        # stores eigenvectors as columns, so each row contributes two entries
+        # that are rotated in the active (row, column) plane.
+        for index in range(size):
+            v_ip = eigenvector_matrix[index][row]
+            v_iq = eigenvector_matrix[index][column]
+            eigenvector_matrix[index][row] = cosine * v_ip - sine * v_iq
+            eigenvector_matrix[index][column] = sine * v_ip + cosine * v_iq
     else:
         raise ValueError("Jacobi eigenvalue decomposition did not converge")
 
-    return sorted(values[index][index] for index in range(size))
+    pairs: list[tuple[float, Vector]] = []
+    for index in range(size):
+        eigenvector = [eigenvector_matrix[row][index] for row in range(size)]
+        pairs.append((values[index][index], _orient_vector(normalize_vector(eigenvector))))
+
+    pairs.sort(key=lambda pair: pair[0])
+    return [pair[0] for pair in pairs], [pair[1] for pair in pairs]
 
 
 def negative_eigenvalue_count(
@@ -329,6 +402,15 @@ def is_first_order_saddle(
 has_first_order_saddle = is_first_order_saddle
 
 
+def max_abs_off_diagonal(matrix: Iterable[Iterable[NumberLike]]) -> float:
+    """Return the largest absolute off-diagonal value in a square matrix."""
+
+    values = _as_square_matrix(matrix, "matrix")
+    if len(values) == 1:
+        return 0.0
+    return _largest_off_diagonal(values)[2]
+
+
 def _largest_off_diagonal(matrix: Matrix) -> tuple[int, int, float]:
     size = len(matrix)
     best_row = 0
@@ -342,6 +424,20 @@ def _largest_off_diagonal(matrix: Matrix) -> tuple[int, int, float]:
                 best_column = column
                 best_value = value
     return best_row, best_column, best_value
+
+
+def _orient_vector(vector: Vector) -> Vector:
+    """Choose a deterministic sign for an eigenvector.
+
+    Eigenvectors are mathematically unchanged by a sign flip. Picking the sign
+    so the largest-magnitude component is positive keeps test expectations and
+    user-facing output stable across runs.
+    """
+
+    largest_index = max(range(len(vector)), key=lambda index: abs(vector[index]))
+    if vector[largest_index] < 0.0:
+        return [-value for value in vector]
+    return vector
 
 
 def _as_vector(vector: Iterable[NumberLike], name: str) -> Vector:
