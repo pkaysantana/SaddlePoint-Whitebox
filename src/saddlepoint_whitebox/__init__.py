@@ -10,10 +10,24 @@ from .calculus import (
     gradient,
     hessian,
 )
+from .benchmarks import (
+    BenchmarkResult,
+    OptimizerBenchmarkResult,
+    benchmark_optimizer_run,
+    benchmark_pes_evaluation,
+)
 from .classification import (
     StationaryPointType,
     classify_hessian,
     classify_pes_point,
+)
+from .instrumentation import EnergyCallCounter
+from .labels import (
+    PESLabel,
+    export_labels_csv_summary,
+    export_labels_jsonl,
+    generate_pes_label,
+    label_to_dict,
 )
 from .matrix import (
     add_matrices,
@@ -50,6 +64,7 @@ from .optimizers import (
     OptimizationStep,
     eigenvector_following_saddle_search,
 )
+from .physical_models import lennard_jones_cluster_energy
 from .surfaces import (
     coupled_quadratic_saddle,
     muller_brown,
@@ -60,7 +75,11 @@ from .surfaces import (
 __all__ = [
     "add_matrices",
     "add_vectors",
+    "BenchmarkResult",
+    "benchmark_optimizer_run",
+    "benchmark_pes_evaluation",
     "PESPoint",
+    "PESLabel",
     "StationaryPointType",
     "central_difference_gradient",
     "central_difference_hessian",
@@ -71,8 +90,12 @@ __all__ = [
     "determinant",
     "dot",
     "eigenvector_following_saddle_search",
+    "EnergyCallCounter",
     "evaluate_pes",
+    "export_labels_csv_summary",
+    "export_labels_jsonl",
     "force",
+    "generate_pes_label",
     "gradient",
     "has_first_order_saddle",
     "hessian",
@@ -81,6 +104,8 @@ __all__ = [
     "is_symmetric",
     "jacobi_eigendecomposition_symmetric",
     "jacobi_eigenvalues_symmetric",
+    "label_to_dict",
+    "lennard_jones_cluster_energy",
     "matmul",
     "matvec",
     "max_abs_off_diagonal",
@@ -88,6 +113,7 @@ __all__ = [
     "negative_eigenvalue_count",
     "norm",
     "normalize_vector",
+    "OptimizerBenchmarkResult",
     "OptimizationResult",
     "OptimizationStep",
     "outer",
