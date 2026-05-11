@@ -49,6 +49,33 @@ print(result.final_eigenvalues)
 print(result.final_classification)
 ```
 
+## Layer C: Benchmarking And ML Labels
+
+```python
+from saddlepoint_whitebox.benchmarks import benchmark_pes_evaluation
+from saddlepoint_whitebox.calculus import evaluate_pes
+from saddlepoint_whitebox.labels import export_labels_jsonl, generate_pes_label
+from saddlepoint_whitebox.physical_models import lennard_jones_cluster_energy
+from saddlepoint_whitebox.surfaces import quadratic_first_order_saddle
+
+
+benchmark = benchmark_pes_evaluation(
+    "quadratic saddle",
+    quadratic_first_order_saddle,
+    [0.0, 0.0],
+)
+print(benchmark.energy_calls, benchmark.classification)
+
+label = generate_pes_label("quadratic saddle", quadratic_first_order_saddle, [0.0, 0.0])
+export_labels_jsonl([label], "pes_labels.jsonl")
+
+lj_point = evaluate_pes(
+    lambda x: lennard_jones_cluster_energy(x, dimensions=2),
+    [0.0, 0.0, 1.2, 0.0],
+)
+print(lj_point.energy, lj_point.gradient)
+```
+
 Run tests with:
 
 ```powershell
