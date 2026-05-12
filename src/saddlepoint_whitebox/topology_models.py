@@ -12,7 +12,9 @@ from math import exp, isfinite
 
 from .calculus import evaluate_pes
 from .classification import classify_pes_point
+from .evf import lowest_mode
 from .matrix import jacobi_eigendecomposition_symmetric, norm
+from .optimizers import eigenvector_following_saddle_search
 
 
 @dataclass(frozen=True)
@@ -28,16 +30,20 @@ class ElectrophileTopologyParameters:
     barrier_strength: float
     coupling_strength: float
     ring_radius: float = 1.0
+    pi_z: float = 1.4
+    rim_z: float = 0.7
+    q_preferred: float = 1.0
+    confinement_strength: float = 2.0
 
 
 def default_no_plus_topology_parameters() -> ElectrophileTopologyParameters:
     """Return synthetic parameters for an NO+ inspired topology model."""
 
     return ElectrophileTopologyParameters(
-        name="NO+ synthetic topology",
+        name="NO+ synthetic benzene-electrophile topology",
         pi_minimum_energy=-36.0,
         saddle_energy=23.0,
-        wheland_region_energy=-12.0,
+        wheland_region_energy=5.0,
         center_well_strength=1.0,
         rim_well_strength=1.0,
         barrier_strength=1.0,
@@ -62,13 +68,17 @@ def benzene_electrophile_topology_energy(
     params = _validated_parameters(parameters)
     rho, z_value, q_value = _parse_coordinates(coordinates)
     ring_radius = params.ring_radius
+    q_scale = max(abs(params.q_preferred), 1.0)
+    saddle_rho = 0.52 * ring_radius
+    saddle_z = 0.5 * (params.pi_z + params.rim_z)
+    saddle_q = 0.45 * params.q_preferred
 
     # Over-center pi-complex attraction: electrophile above the aromatic center,
     # moderate height, and little arenium/bond-formation character.
     center_basin = _gaussian(
         ((rho - 0.0) / (0.30 * ring_radius)) ** 2
-        + ((z_value - 1.35) / 0.32) ** 2
-        + ((q_value - 0.0) / 0.45) ** 2
+        + ((z_value - params.pi_z) / 0.32) ** 2
+        + ((q_value - 0.0) / (0.45 * q_scale)) ** 2
     )
     center_term = (
         params.pi_minimum_energy
@@ -80,11 +90,12 @@ def benzene_electrophile_topology_energy(
     # rim, lower height, and larger bond-formation character.
     rim_basin = _gaussian(
         ((rho - ring_radius) / (0.28 * ring_radius)) ** 2
-        + ((z_value - 0.55) / 0.25) ** 2
-        + ((q_value - 1.0) / 0.35) ** 2
+        + ((z_value - params.rim_z) / 0.25) ** 2
+        + ((q_value - params.q_preferred) / (0.35 * q_scale)) ** 2
     )
+    rim_depth = max(params.saddle_energy - params.wheland_region_energy, 1.0)
     rim_term = (
-        params.wheland_region_energy
+        -rim_depth
         * params.rim_well_strength
         * rim_basin
     )
@@ -92,9 +103,9 @@ def benzene_electrophile_topology_energy(
     # Barrier ridge between center and rim: a positive Gaussian feature located
     # between the two basins, representing a transition-state-like topology.
     barrier_basin = _gaussian(
-        ((rho - (0.52 * ring_radius)) / (0.20 * ring_radius)) ** 2
-        + ((z_value - 0.90) / 0.22) ** 2
-        + ((q_value - 0.45) / 0.24) ** 2
+        ((rho - saddle_rho) / (0.20 * ring_radius)) ** 2
+        + ((z_value - saddle_z) / 0.22) ** 2
+        + ((q_value - saddle_q) / (0.24 * q_scale)) ** 2
     )
     barrier_term = (
         params.saddle_energy
@@ -110,8 +121,8 @@ def benzene_electrophile_topology_energy(
         * params.barrier_strength
         * 1.35
         * (
-            ((z_value - 0.90) / 0.22) ** 2
-            + ((q_value - 0.45) / 0.24) ** 2
+            ((z_value - saddle_z) / 0.22) ** 2
+            + ((q_value - saddle_q) / (0.24 * q_scale)) ** 2
         )
         * barrier_basin
     )
@@ -119,19 +130,26 @@ def benzene_electrophile_topology_energy(
     # Coupling stabilizes simultaneous rim approach and bond formation. This is
     # the reduced-coordinate analogue of pi-complex character mixing with
     # sigma-complex / arenium character.
-    height_gate = _gaussian(((z_value - 0.70) / 0.55) ** 2)
+    height_gate = _gaussian(((z_value - params.rim_z) / 0.55) ** 2)
     coupling_term = (
         -abs(params.coupling_strength)
         * (rho / ring_radius)
-        * q_value
+        * (q_value / q_scale)
         * height_gate
     )
 
     # Gentle confinement prevents the synthetic PES from drifting to unbounded
     # coordinates far outside the chemically meaningful reduced domain.
-    radial_confinement = 1.8 * (rho / (1.6 * ring_radius)) ** 4
-    height_confinement = 1.2 * ((z_value - 0.95) / 1.2) ** 4
-    q_confinement = 0.8 * ((q_value - 0.5) / 1.2) ** 4
+    midpoint_z = 0.5 * (params.pi_z + params.rim_z)
+    midpoint_q = 0.5 * params.q_preferred
+    radial_confinement = (rho / (1.6 * ring_radius)) ** 4
+    height_confinement = ((z_value - midpoint_z) / 1.2) ** 4
+    q_confinement = ((q_value - midpoint_q) / (1.2 * q_scale)) ** 4
+    confinement_term = params.confinement_strength * (
+        radial_confinement
+        + height_confinement
+        + q_confinement
+    )
 
     return (
         center_term
@@ -139,9 +157,7 @@ def benzene_electrophile_topology_energy(
         + barrier_term
         + transverse_ridge_term
         + coupling_term
-        + radial_confinement
-        + height_confinement
-        + q_confinement
+        + confinement_term
     )
 
 
@@ -152,29 +168,31 @@ def benzene_electrophile_starting_points(
 
     params = _validated_parameters(parameters)
     radius = params.ring_radius
+    saddle_z = 0.5 * (params.pi_z + params.rim_z)
     return {
-        "pi_complex_guess": (0.0, 1.35, 0.0),
-        "rim_complex_guess": (0.95 * radius, 0.55, 1.0),
-        "saddle_guess": (0.52 * radius, 0.90, 0.45),
+        "pi_complex_guess": (0.0, params.pi_z, 0.0),
+        "rim_complex_guess": (0.95 * radius, params.rim_z, params.q_preferred),
+        "saddle_guess": (0.52 * radius, saddle_z, 0.45 * params.q_preferred),
     }
 
 
 def evaluate_topology_stationary_candidates(
     parameters: ElectrophileTopologyParameters | None = None,
-) -> dict[str, object]:
+) -> dict[str, dict[str, object]]:
     """Evaluate topology diagnostics for named reduced-coordinate guesses."""
 
     params = _validated_parameters(parameters)
-    results: dict[str, object] = {}
+    results: dict[str, dict[str, object]] = {}
     for name, coordinates in benzene_electrophile_starting_points(params).items():
         point = evaluate_pes(
             lambda x: benzene_electrophile_topology_energy(x, params),
             coordinates,
         )
         eigenvalues, eigenvectors = jacobi_eigendecomposition_symmetric(point.hessian)
-        lowest_index = min(range(len(eigenvalues)), key=eigenvalues.__getitem__)
+        lowest_eigenvalue, reaction_coordinate = lowest_mode(eigenvalues, eigenvectors)
         negative_count = sum(1 for eigenvalue in eigenvalues if eigenvalue < -1.0e-8)
         results[name] = {
+            "name": name,
             "coordinates": list(point.coordinates),
             "energy": point.energy,
             "gradient": list(point.gradient),
@@ -182,10 +200,30 @@ def evaluate_topology_stationary_candidates(
             "classification": classify_pes_point(point).value,
             "hessian_eigenvalues": list(eigenvalues),
             "negative_eigenvalue_count": negative_count,
-            "reaction_coordinate_eigenvalue": eigenvalues[lowest_index],
-            "reaction_coordinate": list(eigenvectors[lowest_index]),
+            "lowest_eigenvalue": lowest_eigenvalue,
+            "reaction_coordinate_eigenvalue": lowest_eigenvalue,
+            "reaction_coordinate": list(reaction_coordinate),
         }
     return results
+
+
+def optimize_topology_saddle_candidate(
+    parameters: ElectrophileTopologyParameters | None = None,
+    initial_key: str = "saddle_guess",
+    max_iterations: int = 100,
+):
+    """Run the EVF optimizer from one named synthetic topology starting point."""
+
+    params = _validated_parameters(parameters)
+    starting_points = benzene_electrophile_starting_points(params)
+    if initial_key not in starting_points:
+        raise ValueError(f"unknown topology starting point: {initial_key}")
+
+    return eigenvector_following_saddle_search(
+        lambda x: benzene_electrophile_topology_energy(x, params),
+        starting_points[initial_key],
+        max_iterations=max_iterations,
+    )
 
 
 def _parse_coordinates(coordinates: Iterable[float]) -> tuple[float, float, float]:
@@ -212,6 +250,10 @@ def _validated_parameters(
         params.barrier_strength,
         params.coupling_strength,
         params.ring_radius,
+        params.pi_z,
+        params.rim_z,
+        params.q_preferred,
+        params.confinement_strength,
     )
     if any(not isfinite(value) for value in numeric_values):
         raise ValueError("topology parameters must be finite numbers")
@@ -223,6 +265,8 @@ def _validated_parameters(
         raise ValueError("rim_well_strength must be positive")
     if params.barrier_strength <= 0.0:
         raise ValueError("barrier_strength must be positive")
+    if params.confinement_strength <= 0.0:
+        raise ValueError("confinement_strength must be positive")
     return params
 
 

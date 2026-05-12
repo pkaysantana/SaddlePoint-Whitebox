@@ -96,6 +96,7 @@ from .topology_models import (
     benzene_electrophile_topology_energy,
     default_no_plus_topology_parameters,
     evaluate_topology_stationary_candidates,
+    optimize_topology_saddle_candidate,
 )
 
 __all__ = [
@@ -156,6 +157,7 @@ __all__ = [
     "OptimizerBenchmarkResult",
     "OptimizationResult",
     "OptimizationStep",
+    "optimize_topology_saddle_candidate",
     "outer",
     "PerturbationSettings",
     "project",

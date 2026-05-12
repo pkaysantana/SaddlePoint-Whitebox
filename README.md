@@ -49,7 +49,7 @@ print(result.final_eigenvalues)
 print(result.final_classification)
 ```
 
-## Explicit EVF Step Calculation
+## Explicit Eigenvector-Following Step
 
 ```python
 from saddlepoint_whitebox.evf import EVFOptimizer, reaction_coordinate_from_hessian
@@ -66,6 +66,7 @@ target_eigenvalue, target_mode = reaction_coordinate_from_hessian(
 
 print(step_result.step)
 print(step_result.mode_gradients)
+print(step_result.target_eigenvalue)
 print(target_eigenvalue, target_mode)
 ```
 
@@ -117,6 +118,10 @@ print(lj_point.energy, lj_point.gradient)
 
 ## Reduced-Order Benzene-Electrophile Topology Model
 
+This synthetic reduced-order model uses coordinates `[rho, z, q]`: `rho` is
+lateral displacement from the ring center toward the rim, `z` is height above
+the aromatic plane, and `q` is a bond-formation / arenium-character coordinate.
+
 ```python
 from saddlepoint_whitebox.topology_models import (
     benzene_electrophile_topology_energy,
@@ -134,11 +139,10 @@ print(diagnostics["saddle_guess"]["classification"])
 print(diagnostics["saddle_guess"]["hessian_eigenvalues"])
 ```
 
-This is a synthetic reduced-coordinate PES topology model inspired by
-benzene-electrophile approach, pi-complex character, and Wheland-like regions.
-It is useful for testing whether the engine distinguishes minimum-like and
-saddle-like topology. It is not a substitute for ORCA, Gaussian, Psi4, xTB,
-CCSD(T), or any professional quantum chemistry transition-state workflow.
+The model is a topology bridge from toy surfaces toward later package-based
+Project 2 workflows with xTB, Psi4, ORCA, or PySCF. It is synthetic and
+educational; it is not ab initio chemistry and does not reproduce experimental
+or high-level quantum chemistry results.
 
 ## Diagnostics And Synthetic ML Dataset Generation
 

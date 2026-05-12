@@ -27,6 +27,7 @@ class EVFStepResult:
     step: tuple[float, ...]
     step_norm: float
     mode_gradients: tuple[float, ...]
+    mode_step_components: tuple[float, ...]
     scaled: bool
     target_mode_index: int
     target_eigenvalue: float
@@ -95,6 +96,7 @@ class EVFOptimizer:
         if step_norm > self.settings.trust_radius:
             scale = self.settings.trust_radius / step_norm
             step = [scale * value for value in step]
+            step_components = [scale * value for value in step_components]
             step_norm = norm(step)
             scaled = True
 
@@ -102,6 +104,7 @@ class EVFOptimizer:
             step=tuple(step),
             step_norm=step_norm,
             mode_gradients=mode_gradients,
+            mode_step_components=tuple(step_components),
             scaled=scaled,
             target_mode_index=self.settings.target_mode_index,
             target_eigenvalue=eigenvalue_values[self.settings.target_mode_index],
