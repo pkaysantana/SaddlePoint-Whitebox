@@ -114,12 +114,21 @@ def lowest_mode(
 ) -> tuple[float, tuple[float, ...]]:
     """Return the lowest eigenvalue and its corresponding eigenvector."""
 
-    _, eigenvalue_values, eigenvector_values = _validate_inputs(
-        [0.0 for _ in eigenvalues],
-        eigenvalues,
-        eigenvectors,
-        target_mode_index=0,
-    )
+    eigenvalue_values = _as_finite_vector(eigenvalues, "eigenvalues")
+    eigenvector_values = [
+        _as_finite_vector(eigenvector, f"eigenvectors[{index}]")
+        for index, eigenvector in enumerate(eigenvectors)
+    ]
+    if len(eigenvector_values) != len(eigenvalue_values):
+        raise ValueError("number of eigenvectors must match number of eigenvalues")
+    for index, eigenvector in enumerate(eigenvector_values):
+        if len(eigenvector) != len(eigenvalue_values):
+            raise ValueError(
+                f"eigenvectors[{index}] length must match number of eigenvalues"
+            )
+        if norm(eigenvector) == 0.0:
+            raise ValueError(f"eigenvectors[{index}] must be non-zero")
+
     lowest_index = min(range(len(eigenvalue_values)), key=eigenvalue_values.__getitem__)
     return eigenvalue_values[lowest_index], tuple(eigenvector_values[lowest_index])
 

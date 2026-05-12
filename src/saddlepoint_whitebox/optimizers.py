@@ -8,7 +8,8 @@ from math import isfinite
 
 from .calculus import PESPoint, evaluate_pes
 from .classification import StationaryPointType, classify_pes_point
-from .matrix import dot, jacobi_eigendecomposition_symmetric, norm
+from .evf import EVFOptimizer, EVFSettings
+from .matrix import jacobi_eigendecomposition_symmetric, norm
 
 ScalarFunction = Callable[[list[float]], float]
 
@@ -72,6 +73,14 @@ def eigenvector_following_saddle_search(
 
     coordinates = _as_coordinate_tuple(initial_coordinates)
     history: list[OptimizationStep] = []
+    evf_optimizer = EVFOptimizer(
+        EVFSettings(
+            target_mode_index=0,
+            trust_radius=trust_radius,
+            eigenvalue_shift=EIGENVALUE_SHIFT,
+            climb_on_target_mode=True,
+        )
+    )
 
     for iteration in range(max_iterations):
         point = evaluate_pes(
@@ -113,9 +122,13 @@ def eigenvector_following_saddle_search(
                 history=history,
             )
 
-        step = _eigenvector_following_step(point.gradient, eigenvalues, eigenvectors)
-        step = _apply_trust_radius(step, trust_radius)
-        step_norm = norm(step)
+        step_result = evf_optimizer.compute_step(
+            point.gradient,
+            eigenvalues,
+            eigenvectors,
+        )
+        step = step_result.step
+        step_norm = step_result.step_norm
         history.append(
             OptimizationStep(
                 iteration=iteration,
@@ -167,24 +180,15 @@ def _eigenvector_following_step(
     eigenvalues: list[float],
     eigenvectors: list[list[float]],
 ) -> list[float]:
-    gradient_values = [float(value) for value in gradient]
-    step = [0.0 for _ in gradient_values]
-
-    for mode_index, (eigenvalue, eigenvector) in enumerate(zip(eigenvalues, eigenvectors)):
-        gradient_component = dot(gradient_values, eigenvector)
-        denominator = abs(eigenvalue) + EIGENVALUE_SHIFT
-
-        # A minimizer would move against the gradient in every mode. For a
-        # transition-state search we reverse only the lowest mode so that the
-        # algorithm climbs the suspected reaction coordinate and damps the rest.
-        if mode_index == 0:
-            mode_step = gradient_component / denominator
-        else:
-            mode_step = -gradient_component / denominator
-
-        for coordinate_index, vector_component in enumerate(eigenvector):
-            step[coordinate_index] += mode_step * vector_component
-    return step
+    result = EVFOptimizer(
+        EVFSettings(
+            target_mode_index=0,
+            trust_radius=1.0e300,
+            eigenvalue_shift=EIGENVALUE_SHIFT,
+            climb_on_target_mode=True,
+        )
+    ).compute_step(gradient, eigenvalues, eigenvectors)
+    return list(result.step)
 
 
 def _apply_trust_radius(step: list[float], trust_radius: float) -> list[float]:

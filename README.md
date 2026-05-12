@@ -49,6 +49,26 @@ print(result.final_eigenvalues)
 print(result.final_classification)
 ```
 
+## Explicit EVF Step Calculation
+
+```python
+from saddlepoint_whitebox.evf import EVFOptimizer, reaction_coordinate_from_hessian
+
+
+gradient = [0.0, 1.0]
+eigenvalues = [-2.0, 4.0]
+eigenvectors = [[1.0, 0.0], [0.0, 1.0]]
+
+step_result = EVFOptimizer().compute_step(gradient, eigenvalues, eigenvectors)
+target_eigenvalue, target_mode = reaction_coordinate_from_hessian(
+    [[-2.0, 0.0], [0.0, 4.0]]
+)
+
+print(step_result.step)
+print(step_result.mode_gradients)
+print(target_eigenvalue, target_mode)
+```
+
 ## Layer C: Benchmarking And ML Labels
 
 ```python

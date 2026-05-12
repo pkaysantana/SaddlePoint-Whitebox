@@ -21,6 +21,13 @@ from .classification import (
     classify_hessian,
     classify_pes_point,
 )
+from .evf import (
+    EVFOptimizer,
+    EVFSettings,
+    EVFStepResult,
+    lowest_mode,
+    reaction_coordinate_from_hessian,
+)
 from .instrumentation import EnergyCallCounter
 from .labels import (
     PESLabel,
@@ -91,6 +98,9 @@ __all__ = [
     "dot",
     "eigenvector_following_saddle_search",
     "EnergyCallCounter",
+    "EVFOptimizer",
+    "EVFSettings",
+    "EVFStepResult",
     "evaluate_pes",
     "export_labels_csv_summary",
     "export_labels_jsonl",
@@ -106,6 +116,7 @@ __all__ = [
     "jacobi_eigenvalues_symmetric",
     "label_to_dict",
     "lennard_jones_cluster_energy",
+    "lowest_mode",
     "matmul",
     "matvec",
     "max_abs_off_diagonal",
@@ -120,6 +131,7 @@ __all__ = [
     "project",
     "quadratic_first_order_saddle",
     "quadratic_minimum",
+    "reaction_coordinate_from_hessian",
     "scale_matrix",
     "scale_vector",
     "shape",
