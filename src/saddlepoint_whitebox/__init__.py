@@ -78,11 +78,20 @@ from .surfaces import (
     quadratic_first_order_saddle,
     quadratic_minimum,
 )
+from .topology_models import (
+    ElectrophileTopologyParameters,
+    benzene_electrophile_starting_points,
+    benzene_electrophile_topology_energy,
+    default_no_plus_topology_parameters,
+    evaluate_topology_stationary_candidates,
+)
 
 __all__ = [
     "add_matrices",
     "add_vectors",
     "BenchmarkResult",
+    "benzene_electrophile_starting_points",
+    "benzene_electrophile_topology_energy",
     "benchmark_optimizer_run",
     "benchmark_pes_evaluation",
     "PESPoint",
@@ -94,14 +103,17 @@ __all__ = [
     "classify_pes_point",
     "coupled_quadratic_saddle",
     "curvature",
+    "default_no_plus_topology_parameters",
     "determinant",
     "dot",
+    "ElectrophileTopologyParameters",
     "eigenvector_following_saddle_search",
     "EnergyCallCounter",
     "EVFOptimizer",
     "EVFSettings",
     "EVFStepResult",
     "evaluate_pes",
+    "evaluate_topology_stationary_candidates",
     "export_labels_csv_summary",
     "export_labels_jsonl",
     "force",

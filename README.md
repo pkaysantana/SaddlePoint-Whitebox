@@ -96,6 +96,31 @@ lj_point = evaluate_pes(
 print(lj_point.energy, lj_point.gradient)
 ```
 
+## Reduced-Order Benzene-Electrophile Topology Model
+
+```python
+from saddlepoint_whitebox.topology_models import (
+    benzene_electrophile_topology_energy,
+    benzene_electrophile_starting_points,
+    evaluate_topology_stationary_candidates,
+)
+
+
+points = benzene_electrophile_starting_points()
+energy = benzene_electrophile_topology_energy(points["saddle_guess"])
+diagnostics = evaluate_topology_stationary_candidates()
+
+print(energy)
+print(diagnostics["saddle_guess"]["classification"])
+print(diagnostics["saddle_guess"]["hessian_eigenvalues"])
+```
+
+This is a synthetic reduced-coordinate PES topology model inspired by
+benzene-electrophile approach, pi-complex character, and Wheland-like regions.
+It is useful for testing whether the engine distinguishes minimum-like and
+saddle-like topology. It is not a substitute for ORCA, Gaussian, Psi4, xTB,
+CCSD(T), or any professional quantum chemistry transition-state workflow.
+
 Run tests with:
 
 ```powershell
