@@ -76,8 +76,8 @@ def generate_topology_dataset(
 ) -> list[PESLabel]:
     """Generate and export perturbed labels around topology-model guesses."""
 
-    if not isinstance(samples, int) or samples < 0:
-        raise ValueError("samples must be a non-negative integer")
+    if not isinstance(samples, int) or samples <= 0:
+        raise ValueError("samples must be a positive integer")
 
     centers = benzene_electrophile_starting_points()
     center_items = list(centers.items())
@@ -115,8 +115,8 @@ def generate_topology_dataset(
 
 
 def _validate_settings(settings: PerturbationSettings) -> None:
-    if not isinstance(settings.samples, int) or settings.samples < 0:
-        raise ValueError("samples must be a non-negative integer")
+    if not isinstance(settings.samples, int) or settings.samples <= 0:
+        raise ValueError("samples must be a positive integer")
     if settings.radius < 0.0 or not isfinite(settings.radius):
         raise ValueError("radius must be a non-negative finite number")
     if not isinstance(settings.seed, int):

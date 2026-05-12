@@ -31,6 +31,10 @@ class DiagnosticsTests(unittest.TestCase):
 
         as_dict = diagnostic_to_dict(diagnostic)
         self.assertEqual(as_dict["name"], "quadratic saddle")
+        self.assertEqual(
+            as_dict["classification"],
+            StationaryPointType.FIRST_ORDER_SADDLE.value,
+        )
         self.assertIsInstance(as_dict["eigenvalues"], list)
 
     def test_reaction_coordinate_scan_returns_expected_number_of_points(self) -> None:
@@ -59,6 +63,14 @@ class DiagnosticsTests(unittest.TestCase):
                 quadratic_first_order_saddle,
                 [0.0, 0.0],
                 [1.0, 0.0, 0.0],
+            )
+
+    def test_reaction_coordinate_scan_rejects_zero_direction(self) -> None:
+        with self.assertRaises(ValueError):
+            scan_along_reaction_coordinate(
+                quadratic_first_order_saddle,
+                [0.0, 0.0],
+                [0.0, 0.0],
             )
 
 

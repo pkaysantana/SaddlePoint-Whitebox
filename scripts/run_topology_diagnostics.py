@@ -22,6 +22,7 @@ def main() -> None:
         print(f"  gradient norm: {diagnostic.gradient_norm:.8e}")
         print(f"  eigenvalues: {diagnostic.eigenvalues}")
         print(f"  classification: {diagnostic.classification}")
+        print(f"  negative eigenvalue count: {diagnostic.negative_eigenvalue_count}")
         print(f"  reaction coordinate: {diagnostic.reaction_coordinate}")
         if diagnostic.warning:
             print(f"  warning: {diagnostic.warning}")

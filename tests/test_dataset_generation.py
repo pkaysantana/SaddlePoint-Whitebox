@@ -38,6 +38,15 @@ class DatasetGenerationTests(unittest.TestCase):
         self.assertEqual(first[0].metadata["model_name"], "quadratic saddle")
         self.assertIn("source_center", first[0].metadata)
 
+    def test_perturbed_labels_reject_non_positive_sample_count(self) -> None:
+        with self.assertRaises(ValueError):
+            generate_perturbed_labels(
+                "quadratic saddle",
+                quadratic_first_order_saddle,
+                [0.0, 0.0],
+                settings=PerturbationSettings(samples=0),
+            )
+
     def test_generate_topology_dataset_exports_files(self) -> None:
         with TemporaryDirectory() as temporary_directory:
             jsonl_path = Path(temporary_directory) / "topology_labels.jsonl"

@@ -73,7 +73,7 @@ The main value is controlled topology. A small synthetic surface lets us create
 examples where saddle-like curvature, minimum-like curvature, and ambiguous
 regions are present in a way that can be inspected and debugged.
 
-## G. Why Hessian Labels Matter
+## G. Why Hessian-Derived Labels Are Useful
 
 Energy alone does not identify transition-state topology. Hessian eigenvalues
 describe local curvature, and the lowest eigenvector gives a reaction-coordinate
@@ -82,17 +82,18 @@ models that learn to classify minima versus saddle candidates, predict local
 optimizer steps, or propose reaction-coordinate directions before expensive
 external calculations are attempted.
 
-## H. Still Not Ab Initio Chemistry
+## H. Why This Is Still Not Ab Initio Chemistry
 
-The synthetic topology dataset is not a substitute for quantum chemistry. It
+The synthetic topology dataset is educational data, not a substitute for
+quantum chemistry. It
 does not provide electronic structure, basis sets, correlation methods, solvent
 models, thermochemistry, or validated barriers. It only provides a transparent
 mathematical scaffold for topology and data-pipeline experiments.
 
-## I. Path To Project 2
+## I. Path To Project 2: Package-Based Chemistry Workflow
 
 A later package-based chemistry workflow can keep this project as the whitebox
 reference layer and connect the energy function to external tools such as xTB,
-ORCA, Psi4, PySCF, or a learned potential. That second project should manage
-real molecular inputs, external executables, caching, units, and chemistry
-metadata separately from this dependency-free core.
+Psi4, ORCA, PySCF, RDKit, ASE, or a learned potential. That second project
+should manage real molecular inputs, external executables, caching, units, and
+chemistry metadata separately from this dependency-free core.

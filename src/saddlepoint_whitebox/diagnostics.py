@@ -56,6 +56,7 @@ def diagnose_saddle_candidate(
         gradient_norm=norm(point.gradient),
         eigenvalues=eigenvalues,
         negative_eigenvalue_count=negative_count,
+        classification=classification,
     )
 
     return SaddleDiagnostic(
@@ -132,6 +133,7 @@ def _diagnostic_warnings(
     gradient_norm: float,
     eigenvalues: list[float],
     negative_eigenvalue_count: int,
+    classification: StationaryPointType,
 ) -> list[str]:
     warnings: list[str] = []
     if gradient_norm > GRADIENT_WARNING_TOLERANCE and negative_eigenvalue_count == 1:
@@ -140,6 +142,8 @@ def _diagnostic_warnings(
         )
     if any(abs(eigenvalue) <= EIGENVALUE_ZERO_TOLERANCE for eigenvalue in eigenvalues):
         warnings.append("one or more Hessian eigenvalues are near zero")
+    if classification != StationaryPointType.FIRST_ORDER_SADDLE:
+        warnings.append("candidate is not classified as a first-order saddle")
     return warnings
 
 
