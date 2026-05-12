@@ -59,3 +59,40 @@ prediction.
 This does not replace Gaussian, ORCA, xTB, Psi4, or professional transition
 state search methods. It is a transparent educational and research scaffold.
 Its value is understanding, label generation, and prototype design.
+
+## F. Synthetic Topology Datasets
+
+The reduced benzene-electrophile model can generate perturbed configurations
+around pi-complex, rim/Wheland-like, and saddle-like regions. These datasets are
+synthetic by design. They are useful because every point can be labeled by the
+same whitebox calculus pipeline: energy, gradient, Hessian, Hessian eigenvalues,
+negative eigenvalue count, reaction-coordinate direction, and stationary-point
+classification.
+
+The main value is controlled topology. A small synthetic surface lets us create
+examples where saddle-like curvature, minimum-like curvature, and ambiguous
+regions are present in a way that can be inspected and debugged.
+
+## G. Why Hessian Labels Matter
+
+Energy alone does not identify transition-state topology. Hessian eigenvalues
+describe local curvature, and the lowest eigenvector gives a reaction-coordinate
+candidate when the lowest eigenvalue is negative. These labels can supervise
+models that learn to classify minima versus saddle candidates, predict local
+optimizer steps, or propose reaction-coordinate directions before expensive
+external calculations are attempted.
+
+## H. Still Not Ab Initio Chemistry
+
+The synthetic topology dataset is not a substitute for quantum chemistry. It
+does not provide electronic structure, basis sets, correlation methods, solvent
+models, thermochemistry, or validated barriers. It only provides a transparent
+mathematical scaffold for topology and data-pipeline experiments.
+
+## I. Path To Project 2
+
+A later package-based chemistry workflow can keep this project as the whitebox
+reference layer and connect the energy function to external tools such as xTB,
+ORCA, Psi4, PySCF, or a learned potential. That second project should manage
+real molecular inputs, external executables, caching, units, and chemistry
+metadata separately from this dependency-free core.

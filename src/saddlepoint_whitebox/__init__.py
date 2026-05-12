@@ -21,6 +21,17 @@ from .classification import (
     classify_hessian,
     classify_pes_point,
 )
+from .dataset_generation import (
+    PerturbationSettings,
+    generate_perturbed_labels,
+    generate_topology_dataset,
+)
+from .diagnostics import (
+    SaddleDiagnostic,
+    diagnose_saddle_candidate,
+    diagnostic_to_dict,
+    scan_along_reaction_coordinate,
+)
 from .evf import (
     EVFOptimizer,
     EVFSettings,
@@ -28,6 +39,7 @@ from .evf import (
     lowest_mode,
     reaction_coordinate_from_hessian,
 )
+from .finite_difference import adaptive_step
 from .instrumentation import EnergyCallCounter
 from .labels import (
     PESLabel,
@@ -89,6 +101,7 @@ from .topology_models import (
 __all__ = [
     "add_matrices",
     "add_vectors",
+    "adaptive_step",
     "BenchmarkResult",
     "benzene_electrophile_starting_points",
     "benzene_electrophile_topology_energy",
@@ -105,6 +118,8 @@ __all__ = [
     "curvature",
     "default_no_plus_topology_parameters",
     "determinant",
+    "diagnose_saddle_candidate",
+    "diagnostic_to_dict",
     "dot",
     "ElectrophileTopologyParameters",
     "eigenvector_following_saddle_search",
@@ -118,6 +133,8 @@ __all__ = [
     "export_labels_jsonl",
     "force",
     "generate_pes_label",
+    "generate_perturbed_labels",
+    "generate_topology_dataset",
     "gradient",
     "has_first_order_saddle",
     "hessian",
@@ -140,12 +157,15 @@ __all__ = [
     "OptimizationResult",
     "OptimizationStep",
     "outer",
+    "PerturbationSettings",
     "project",
     "quadratic_first_order_saddle",
     "quadratic_minimum",
     "reaction_coordinate_from_hessian",
+    "SaddleDiagnostic",
     "scale_matrix",
     "scale_vector",
+    "scan_along_reaction_coordinate",
     "shape",
     "solve_linear_system",
     "subtract_matrices",

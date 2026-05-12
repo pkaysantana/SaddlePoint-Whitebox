@@ -6,7 +6,10 @@ from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from math import isfinite
 
+from .finite_difference import adaptive_step
+
 ScalarFunction = Callable[[list[float]], float]
+StepSpec = float | Sequence[float] | str
 
 DEFAULT_GRADIENT_STEP = 1.0e-5
 DEFAULT_HESSIAN_STEP = 1.0e-4
@@ -26,7 +29,7 @@ class PESPoint:
 def central_difference_gradient(
     energy: ScalarFunction,
     coordinates: Iterable[float],
-    step: float | Sequence[float] = DEFAULT_GRADIENT_STEP,
+    step: StepSpec = DEFAULT_GRADIENT_STEP,
 ) -> list[float]:
     """Return first partial derivatives using O(h^2) central differences.
 
@@ -34,11 +37,12 @@ def central_difference_gradient(
 
         dE/dx_i ~= (E(x_i + h_i) - E(x_i - h_i)) / (2 h_i)
 
-    ``step`` may be a scalar or one positive step per coordinate.
+    ``step`` may be a scalar, one positive step per coordinate, or the string
+    ``"adaptive"``.
     """
 
     coords = _as_coordinate_vector(coordinates)
-    steps = _as_step_vector(step, len(coords))
+    steps = _as_step_vector(step, coords)
 
     derivatives: list[float] = []
     for index, delta in enumerate(steps):
@@ -53,7 +57,7 @@ def central_difference_gradient(
 def central_difference_hessian(
     energy: ScalarFunction,
     coordinates: Iterable[float],
-    step: float | Sequence[float] = DEFAULT_HESSIAN_STEP,
+    step: StepSpec = DEFAULT_HESSIAN_STEP,
 ) -> list[list[float]]:
     """Return the Hessian matrix using central finite differences.
 
@@ -72,7 +76,7 @@ def central_difference_hessian(
     """
 
     coords = _as_coordinate_vector(coordinates)
-    steps = _as_step_vector(step, len(coords))
+    steps = _as_step_vector(step, coords)
     dimension = len(coords)
 
     base_energy = _evaluate(energy, coords)
@@ -105,8 +109,8 @@ def central_difference_hessian(
 def evaluate_pes(
     energy: ScalarFunction,
     coordinates: Iterable[float],
-    gradient_step: float | Sequence[float] = DEFAULT_GRADIENT_STEP,
-    hessian_step: float | Sequence[float] = DEFAULT_HESSIAN_STEP,
+    gradient_step: StepSpec = DEFAULT_GRADIENT_STEP,
+    hessian_step: StepSpec = DEFAULT_HESSIAN_STEP,
 ) -> PESPoint:
     """Evaluate energy, gradient, force, and Hessian at one PES point."""
 
@@ -127,7 +131,7 @@ def evaluate_pes(
 def force(
     energy: ScalarFunction,
     coordinates: Iterable[float],
-    step: float | Sequence[float] = DEFAULT_GRADIENT_STEP,
+    step: StepSpec = DEFAULT_GRADIENT_STEP,
 ) -> list[float]:
     """Return the physical force vector, using F = -grad(E)."""
 
@@ -148,9 +152,14 @@ def _as_coordinate_vector(coordinates: Iterable[float]) -> list[float]:
     return values
 
 
-def _as_step_vector(step: float | Sequence[float], dimension: int) -> list[float]:
+def _as_step_vector(step: StepSpec, coordinates: Sequence[float]) -> list[float]:
+    dimension = len(coordinates)
     if isinstance(step, (int, float)):
         steps = [float(step)] * dimension
+    elif isinstance(step, str):
+        if step != "adaptive":
+            raise ValueError('step string must be "adaptive"')
+        steps = adaptive_step(coordinates)
     else:
         steps = [float(value) for value in step]
         if len(steps) != dimension:

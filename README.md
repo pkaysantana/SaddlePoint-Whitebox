@@ -69,6 +69,25 @@ print(step_result.mode_gradients)
 print(target_eigenvalue, target_mode)
 ```
 
+## Fixed And Adaptive Finite-Difference Steps
+
+```python
+from saddlepoint_whitebox.calculus import gradient, hessian
+
+
+def energy(x):
+    return x[0] ** 2 - x[1] ** 2
+
+
+print(gradient(energy, [0.0, 0.0], step=1.0e-5))
+print(hessian(energy, [0.0, 0.0], step="adaptive"))
+```
+
+Fixed steps are useful for reproducible numerical experiments. Adaptive steps
+scale modestly with coordinate magnitude and are helpful near stationary
+regions, but they do not remove the finite-difference cost of gradient and
+Hessian evaluation.
+
 ## Layer C: Benchmarking And ML Labels
 
 ```python
@@ -120,6 +139,41 @@ benzene-electrophile approach, pi-complex character, and Wheland-like regions.
 It is useful for testing whether the engine distinguishes minimum-like and
 saddle-like topology. It is not a substitute for ORCA, Gaussian, Psi4, xTB,
 CCSD(T), or any professional quantum chemistry transition-state workflow.
+
+## Diagnostics And Synthetic ML Dataset Generation
+
+```python
+from saddlepoint_whitebox.dataset_generation import generate_topology_dataset
+from saddlepoint_whitebox.diagnostics import (
+    diagnose_saddle_candidate,
+    scan_along_reaction_coordinate,
+)
+from saddlepoint_whitebox.surfaces import quadratic_first_order_saddle
+
+
+diagnostic = diagnose_saddle_candidate(
+    "quadratic saddle",
+    quadratic_first_order_saddle,
+    [0.0, 0.0],
+)
+scan = scan_along_reaction_coordinate(
+    quadratic_first_order_saddle,
+    diagnostic.coordinates,
+    diagnostic.reaction_coordinate,
+    step_size=0.05,
+    points_each_side=3,
+)
+
+labels = generate_topology_dataset(
+    "data/topology_labels.jsonl",
+    "data/topology_labels_summary.csv",
+    samples=30,
+)
+
+print(diagnostic.classification, diagnostic.eigenvalues)
+print(scan)
+print(len(labels))
+```
 
 Run tests with:
 
