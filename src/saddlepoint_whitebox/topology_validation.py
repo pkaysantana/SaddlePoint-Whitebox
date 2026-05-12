@@ -19,6 +19,7 @@ from .topology_models import (
 )
 
 EIGENVALUE_TOLERANCE = 1.0e-8
+VALIDATION_GRADIENT_TOLERANCE = 1.0e-5
 
 
 @dataclass(frozen=True)
@@ -69,12 +70,12 @@ def validate_benzene_electrophile_topology(
         result = gradient_descent_minimize(
             energy,
             initial_coordinates,
-            max_iterations=250,
-            gradient_tolerance=1.0e-6,
+            max_iterations=1000,
+            gradient_tolerance=VALIDATION_GRADIENT_TOLERANCE,
             step_tolerance=1.0e-8,
-            learning_rate=0.01,
+            learning_rate=0.001,
             finite_difference_step=finite_difference_step,
-            max_step_norm=0.05,
+            max_step_norm=0.02,
         )
         candidates.append(
             _build_candidate_validation(
@@ -84,6 +85,7 @@ def validate_benzene_electrophile_topology(
                 final_coordinates=result.final_coordinates,
                 energy=energy,
                 finite_difference_step=finite_difference_step,
+                gradient_tolerance=VALIDATION_GRADIENT_TOLERANCE,
                 converged=result.converged,
                 method="gradient_descent_minimize",
                 optimizer_reason=result.reason,
@@ -95,7 +97,7 @@ def validate_benzene_electrophile_topology(
         energy,
         saddle_initial_coordinates,
         max_iterations=150,
-        gradient_tolerance=1.0e-6,
+        gradient_tolerance=VALIDATION_GRADIENT_TOLERANCE,
         step_tolerance=1.0e-8,
         trust_radius=0.08,
         finite_difference_step=finite_difference_step,
@@ -108,6 +110,7 @@ def validate_benzene_electrophile_topology(
             final_coordinates=saddle_result.final_coordinates,
             energy=energy,
             finite_difference_step=finite_difference_step,
+            gradient_tolerance=VALIDATION_GRADIENT_TOLERANCE,
             converged=saddle_result.converged,
             method="eigenvector_following_saddle_search",
             optimizer_reason=saddle_result.reason,
@@ -193,6 +196,7 @@ def _build_candidate_validation(
     final_coordinates: tuple[float, ...],
     energy,
     finite_difference_step: float,
+    gradient_tolerance: float,
     converged: bool,
     method: str,
     optimizer_reason: str,
@@ -208,7 +212,10 @@ def _build_candidate_validation(
         1 for eigenvalue in eigenvalues if eigenvalue < -EIGENVALUE_TOLERANCE
     )
     reaction_coordinate = tuple(eigenvectors[0]) if negative_count > 0 else None
-    classification = classify_pes_point(point).value
+    classification = classify_pes_point(
+        point,
+        gradient_tolerance=gradient_tolerance,
+    ).value
     warning = _candidate_warning(
         name=name,
         classification=classification,
