@@ -63,6 +63,11 @@ class TopologyModelTests(unittest.TestCase):
         for eigenvalues in eigenvalue_sets:
             self.assertTrue(all(math.isfinite(eigenvalue) for eigenvalue in eigenvalues))
 
+    def test_saddle_guess_has_first_order_saddle_like_curvature(self) -> None:
+        diagnostics = evaluate_topology_stationary_candidates()
+
+        self.assertEqual(diagnostics["saddle_guess"]["negative_eigenvalue_count"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
