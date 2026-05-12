@@ -78,6 +78,11 @@ from .matrix import (
     vector_distance,
     zeros,
 )
+from .minimizers import (
+    MinimizationResult,
+    MinimizationStep,
+    gradient_descent_minimize,
+)
 from .optimizers import (
     OptimizationResult,
     OptimizationStep,
@@ -97,6 +102,14 @@ from .topology_models import (
     default_no_plus_topology_parameters,
     evaluate_topology_stationary_candidates,
     optimize_topology_saddle_candidate,
+)
+from .topology_validation import (
+    TopologyCandidateValidation,
+    TopologyValidationReport,
+    rank_topology_reports,
+    scan_topology_parameter_grid,
+    topology_validation_report_to_dict,
+    validate_benzene_electrophile_topology,
 )
 
 __all__ = [
@@ -137,6 +150,7 @@ __all__ = [
     "generate_perturbed_labels",
     "generate_topology_dataset",
     "gradient",
+    "gradient_descent_minimize",
     "has_first_order_saddle",
     "hessian",
     "identity",
@@ -150,6 +164,8 @@ __all__ = [
     "matmul",
     "matvec",
     "max_abs_off_diagonal",
+    "MinimizationResult",
+    "MinimizationStep",
     "muller_brown",
     "negative_eigenvalue_count",
     "norm",
@@ -163,6 +179,7 @@ __all__ = [
     "project",
     "quadratic_first_order_saddle",
     "quadratic_minimum",
+    "rank_topology_reports",
     "reaction_coordinate_from_hessian",
     "SaddleDiagnostic",
     "scale_matrix",
@@ -170,10 +187,15 @@ __all__ = [
     "scan_along_reaction_coordinate",
     "shape",
     "solve_linear_system",
+    "scan_topology_parameter_grid",
     "subtract_matrices",
     "subtract_vectors",
     "trace",
     "transpose",
+    "TopologyCandidateValidation",
+    "TopologyValidationReport",
+    "topology_validation_report_to_dict",
+    "validate_benzene_electrophile_topology",
     "vector_distance",
     "zeros",
 ]

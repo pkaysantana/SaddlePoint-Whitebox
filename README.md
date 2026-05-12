@@ -179,6 +179,29 @@ print(scan)
 print(len(labels))
 ```
 
+## Topology Calibration And Validation
+
+After creating a synthetic PES, the project should still check whether its
+local topology matches the intended mechanistic story. The validation layer
+relaxes the pi and rim guesses as local basins, runs eigenvector following from
+the saddle guess, and reports gradients, Hessian eigenvalues, classifications,
+and reaction-coordinate directions.
+
+Run the default validation report with:
+
+```powershell
+$env:UV_CACHE_DIR='.uv-cache'; $env:UV_PYTHON_INSTALL_DIR='.uv-python'; uv run python scripts/validate_topology_model.py
+```
+
+The desired synthetic result is:
+
+- `pi_complex_guess`: minimum-like.
+- `rim_complex_guess`: intermediate/minimum-like, or at least not a higher-order saddle.
+- `saddle_guess`: first-order saddle with exactly one negative Hessian eigenvalue.
+
+This validates only the reduced-order synthetic topology. It does not reproduce
+real molecular chemistry, ab initio calculations, or experimental data.
+
 Run tests with:
 
 ```powershell
