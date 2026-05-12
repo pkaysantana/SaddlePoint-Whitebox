@@ -102,6 +102,20 @@ def benzene_electrophile_topology_energy(
         * barrier_basin
     )
 
+    # A pure positive Gaussian would be a local maximum in every direction.
+    # A transition-state-like ridge should instead have one downhill/uphill
+    # reaction coordinate and restoring curvature transverse to that path.
+    transverse_ridge_term = (
+        params.saddle_energy
+        * params.barrier_strength
+        * 1.35
+        * (
+            ((z_value - 0.90) / 0.22) ** 2
+            + ((q_value - 0.45) / 0.24) ** 2
+        )
+        * barrier_basin
+    )
+
     # Coupling stabilizes simultaneous rim approach and bond formation. This is
     # the reduced-coordinate analogue of pi-complex character mixing with
     # sigma-complex / arenium character.
@@ -123,6 +137,7 @@ def benzene_electrophile_topology_energy(
         center_term
         + rim_term
         + barrier_term
+        + transverse_ridge_term
         + coupling_term
         + radial_confinement
         + height_confinement
